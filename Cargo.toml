@@ -1,0 +1,12 @@
+[package]
+name = "mwa-scratchpad"
+version = "0.1.0"
+authors = ["Derwent McElhinney <derwentx@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+mwalib = { git = "https://github.com/MWATelescope/mwalib" }
+anyhow = "1.0.*"
+structopt = "0.3.*"

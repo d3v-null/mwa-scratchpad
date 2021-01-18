@@ -1,0 +1,7 @@
+fileignoreconfig:
+- filename: src/dump_context.rs
+  checksum: a3c5003f8d7ce39305f5ed5f28c04ac344b95c41e30c484eff684698917fc6ef
+- filename: src/dump_data.rs
+  checksum: 1130241db1dfc0bbce39cc440048217459d4de0fcc689ec868df043cb83be78d
+- filename: Cargo.toml
+  checksum: efde0d7da41a690357ca325a040215c68fe65bb9f3c8ec02e0587f129b372f25
