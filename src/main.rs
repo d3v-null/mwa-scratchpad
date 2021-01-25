@@ -3,15 +3,16 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 /// Given gpubox files, provide a way to output/dump visibilities.
-use anyhow::*;
-use mwalib::*;
+use anyhow::Error;
+use mwalib::mwalibContext;
 use structopt::StructOpt;
 
 mod dump_context;
-use dump_context::DumpContextOpt;
-
 mod dump_data;
+mod serialize;
+use dump_context::DumpContextOpt;
 use dump_data::DumpDataOpt;
+use serialize::serialize_context;
 
 #[derive(StructOpt, Debug)]
 enum Args {
@@ -19,13 +20,13 @@ enum Args {
     DumpData(DumpDataOpt),
 }
 
-fn main() -> Result<(), anyhow::Error> {
+fn main() -> Result<(), Error> {
     match Args::from_args() {
         Args::DumpContext(DumpContextOpt { metafits, files }) => {
             let mut context = mwalibContext::new(&metafits, &files)?;
             context.rf_inputs.sort_by_key(|k| k.subfile_order);
 
-            println!("{}", context);
+            println!("{}", serde_json::to_string(&serialize_context(context))?);
 
             Ok(())
         }
