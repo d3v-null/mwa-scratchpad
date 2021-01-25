@@ -3,8 +3,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 /// Given gpubox files, provide a way to output/dump visibilities.
-use anyhow::*;
-use mwalib::*;
+use anyhow::{Error};
+use mwalib::{mwalibContext};
+use mwalib::misc::{get_antennas_from_baseline};
 use std::fs::File;
 use std::io::Write;
 use structopt::StructOpt;
@@ -54,7 +55,7 @@ pub fn dump_data<T: AsRef<std::path::Path>>(
     fine_channel_range: (usize, usize),
     coarse_channel: usize,
     dump_filename: &T,
-) -> Result<(), anyhow::Error> {
+) -> Result<(), Error> {
     let mut dump_file = File::create(dump_filename)?;
     println!("Dumping data via mwalib...");
     let mut context = mwalibContext::new(metafits, files)?;
@@ -66,7 +67,7 @@ pub fn dump_data<T: AsRef<std::path::Path>>(
     let floats_per_finechan = context.num_visibility_pols * 2;
     let floats_per_baseline = context.num_fine_channels_per_coarse * floats_per_finechan;
 
-    let (ant1, ant2) = misc::get_antennas_from_baseline(baseline, context.num_antennas).unwrap();
+    let (ant1, ant2) = get_antennas_from_baseline(baseline, context.num_antennas).unwrap();
     let ant1_name: String = context.antennas[ant1].tile_name.to_string();
     let ant2_name: String = context.antennas[ant2].tile_name.to_string();
 

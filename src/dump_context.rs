@@ -4,10 +4,7 @@
 
 /// Given an observation's data, verify that `mwalib` is functioning correctly
 /// by printing an observation context.
-use anyhow::*;
 use structopt::StructOpt;
-
-use mwalib::*;
 
 #[cfg(not(tarpaulin_include))]
 #[derive(StructOpt, Debug)]
