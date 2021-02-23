@@ -4,51 +4,25 @@
 
 /// Given gpubox files, provide a way to output/dump visibilities.
 use anyhow::Error;
-use mwalib::mwalibContext;
 use structopt::StructOpt;
 
-mod dump_context;
-mod dump_data;
+mod dump_all_data;
 mod serialize;
-use dump_context::DumpContextOpt;
-use dump_data::DumpDataOpt;
-use serialize::serialize_context;
+use dump_all_data::DumpAllDataOpt;
 
 #[derive(StructOpt, Debug)]
 enum Args {
-    DumpContext(DumpContextOpt),
-    DumpData(DumpDataOpt),
+    DumpAllData(DumpAllDataOpt),
 }
 
 fn main() -> Result<(), Error> {
     match Args::from_args() {
-        Args::DumpContext(DumpContextOpt { metafits, files }) => {
-            let mut context = mwalibContext::new(&metafits, &files)?;
-            context.rf_inputs.sort_by_key(|k| k.subfile_order);
-
-            println!("{}", serde_json::to_string(&serialize_context(context))?);
-
-            Ok(())
-        }
-        Args::DumpData(DumpDataOpt {
-            timestep,
-            baseline,
-            fine_chan1,
-            fine_chan2,
-            coarse_channel,
+        Args::DumpAllData(DumpAllDataOpt {
             metafits,
             files,
             dump_filename,
         }) => {
-            dump_data::dump_data(
-                &metafits,
-                &files,
-                timestep,
-                baseline,
-                (fine_chan1, fine_chan2),
-                coarse_channel,
-                &dump_filename,
-            )?;
+            dump_all_data::dump_all_data(&metafits, &files, &dump_filename)?;
 
             Ok(())
         }
