@@ -4,8 +4,7 @@
 
 /// Given gpubox files, provide a way to output/dump visibilities.
 use anyhow::Error;
-use mwalib::misc::get_antennas_from_baseline;
-use mwalib::mwalibContext;
+use mwalib::{misc::get_antennas_from_baseline, CorrelatorContext};
 use std::fs::File;
 use std::io::Write;
 use structopt::StructOpt;
@@ -35,14 +34,14 @@ pub fn dump_all_data<T: AsRef<std::path::Path>>(
 ) -> Result<(), Error> {
     let mut dump_file = File::create(dump_filename)?;
     println!("Dumping data via mwalib...");
-    let mut context = mwalibContext::new(metafits, files)?;
+    let mut context = CorrelatorContext::new(metafits, files)?;
     let coarse_channel_array = context.coarse_channels.clone();
     let timestep_array = context.timesteps.clone();
 
     println!("Correlator version: {}", context.corr_version);
 
-    let floats_per_finechan = context.num_visibility_pols * 2;
-    let floats_per_baseline = context.num_fine_channels_per_coarse * floats_per_finechan;
+    let floats_per_finechan = context.metafits_context.num_visibility_pols * 2;
+    let floats_per_baseline = context.metafits_context.num_fine_channels_per_coarse * floats_per_finechan;
 
     let mut sum: f64 = 0.;
     let mut float_count: u64 = 0;
@@ -65,10 +64,17 @@ pub fn dump_all_data<T: AsRef<std::path::Path>>(
             for (baseline_index, baseline_chunk) in
                 img_buffer.chunks(floats_per_baseline).enumerate()
             {
-                let (ant1, ant2) =
-                    get_antennas_from_baseline(baseline_index, context.num_antennas).unwrap();
-                let ant1_name: String = context.antennas[ant1].tile_name.to_string();
-                let ant2_name: String = context.antennas[ant2].tile_name.to_string();
+                let (ant1, ant2) = get_antennas_from_baseline(
+                    baseline_index,
+                    context.metafits_context.num_antennas,
+                )
+                .unwrap();
+                let ant1_name: String = context.metafits_context.antennas[ant1]
+                    .tile_name
+                    .to_string();
+                let ant2_name: String = context.metafits_context.antennas[ant2]
+                    .tile_name
+                    .to_string();
                 println!(" -> ant {} vs {}", ant1_name, ant2_name);
 
                 for (fine_chan_index, fine_chan_chunk) in

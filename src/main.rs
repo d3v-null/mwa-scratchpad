@@ -7,8 +7,9 @@ use anyhow::Error;
 use structopt::StructOpt;
 
 mod dump_all_data;
-mod serialize;
 use dump_all_data::DumpAllDataOpt;
+mod serialize;
+use serialize::{serialize_context, SerializableContext};
 
 #[derive(StructOpt, Debug)]
 enum Args {
