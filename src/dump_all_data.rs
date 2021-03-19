@@ -4,7 +4,7 @@
 
 /// Given gpubox files, provide a way to output/dump visibilities.
 use anyhow::Error;
-use mwalib::{misc::get_antennas_from_baseline, CorrelatorContext};
+use mwalib::{get_antennas_from_baseline, CorrelatorContext};
 use radix_fmt::radix;
 use std::fs::File;
 use std::io::Write;
@@ -46,14 +46,14 @@ pub fn dump_all_data<T: AsRef<std::path::Path>>(
     let mut dump_file = File::create(dump_filename)?;
     println!("Dumping data via mwalib...");
     let mut context = CorrelatorContext::new(metafits, files)?;
-    let coarse_channel_array = context.coarse_channels.clone();
+    let coarse_channel_array = context.coarse_chans.clone();
     let timestep_array = context.timesteps.clone();
 
     println!("Correlator version: {}", context.corr_version);
 
     let floats_per_finechan = context.metafits_context.num_visibility_pols * 2;
     let floats_per_baseline =
-        context.metafits_context.num_fine_channels_per_coarse * floats_per_finechan;
+        context.metafits_context.num_corr_fine_chans_per_coarse * floats_per_finechan;
 
     let mut sum: f64 = 0.;
     let mut float_count: u64 = 0;
@@ -66,8 +66,8 @@ pub fn dump_all_data<T: AsRef<std::path::Path>>(
             println!(
                 "Reading coarse chan: {} ({}) {:.3} Mhz, timestep {} ({:?})",
                 coarse_channel_index,
-                coarse_channel.receiver_channel_number,
-                coarse_channel.channel_centre_hz as f32 / 1.0e6,
+                coarse_channel.rec_chan_number,
+                coarse_channel.chan_centre_hz as f32 / 1.0e6,
                 timestep_index,
                 timestep
             );
@@ -78,7 +78,7 @@ pub fn dump_all_data<T: AsRef<std::path::Path>>(
             {
                 let (ant1, ant2) = get_antennas_from_baseline(
                     baseline_index,
-                    context.metafits_context.num_antennas,
+                    context.metafits_context.num_ants,
                 )
                 .unwrap();
                 let ant1_name: String = context.metafits_context.antennas[ant1]
