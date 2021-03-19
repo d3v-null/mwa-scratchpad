@@ -5,6 +5,7 @@
 /// Given gpubox files, provide a way to output/dump visibilities.
 use anyhow::Error;
 use mwalib::{misc::get_antennas_from_baseline, CorrelatorContext};
+use radix_fmt::radix;
 use std::fs::File;
 use std::io::Write;
 use structopt::StructOpt;
@@ -24,6 +25,14 @@ pub struct DumpAllDataOpt {
     // Dump filename
     #[structopt(short, long, parse(from_os_str))]
     pub dump_filename: std::path::PathBuf,
+
+    // Radix (base) of visibility values
+    #[structopt(short, long, default_value = "0")]
+    pub vis_radix: u8,
+
+    // Dump absolute of float values
+    #[structopt(short, long)]
+    pub absolute: bool,
 }
 
 #[cfg(not(tarpaulin_include))]
@@ -31,6 +40,8 @@ pub fn dump_all_data<T: AsRef<std::path::Path>>(
     metafits: &T,
     files: &[T],
     dump_filename: &T,
+    vis_radix: u8,
+    absolute: bool,
 ) -> Result<(), Error> {
     let mut dump_file = File::create(dump_filename)?;
     println!("Dumping data via mwalib...");
@@ -41,14 +52,15 @@ pub fn dump_all_data<T: AsRef<std::path::Path>>(
     println!("Correlator version: {}", context.corr_version);
 
     let floats_per_finechan = context.metafits_context.num_visibility_pols * 2;
-    let floats_per_baseline = context.metafits_context.num_fine_channels_per_coarse * floats_per_finechan;
+    let floats_per_baseline =
+        context.metafits_context.num_fine_channels_per_coarse * floats_per_finechan;
 
     let mut sum: f64 = 0.;
     let mut float_count: u64 = 0;
     writeln!(
         &mut dump_file,
-        "coarse_chan,timestep,baseline,fine_chan,xx_re,xx_im,xy_re,xy_im,yx_re,yx_im,yy_re,yy_im"
-    );
+        "coarse_chan,timestep,baseline,ant1_name,ant2_name,fine_chan,xx_re,xx_im,xy_re,xy_im,yx_re,yx_im,yy_re,yy_im"
+    )?;
     for (coarse_channel_index, coarse_channel) in coarse_channel_array.iter().enumerate() {
         for (timestep_index, timestep) in timestep_array.iter().enumerate() {
             println!(
@@ -75,38 +87,36 @@ pub fn dump_all_data<T: AsRef<std::path::Path>>(
                 let ant2_name: String = context.metafits_context.antennas[ant2]
                     .tile_name
                     .to_string();
-                println!(" -> ant {} vs {}", ant1_name, ant2_name);
 
                 for (fine_chan_index, fine_chan_chunk) in
                     baseline_chunk.chunks(floats_per_finechan).enumerate()
                 {
-                    writeln!(
+                    write!(
                         &mut dump_file,
-                        "{},{},{},{},{},{},{},{},{},{},{},{}",
+                        "{},{},{},{},{},{}",
                         coarse_channel_index,
                         timestep_index,
                         baseline_index,
+                        ant1_name,
+                        ant2_name,
                         fine_chan_index,
-                        fine_chan_chunk[0],
-                        fine_chan_chunk[1],
-                        fine_chan_chunk[2],
-                        fine_chan_chunk[3],
-                        fine_chan_chunk[4],
-                        fine_chan_chunk[5],
-                        fine_chan_chunk[6],
-                        fine_chan_chunk[7],
                     )?;
-
-                    sum = sum
-                        + (fine_chan_chunk[0] as f64)
-                        + (fine_chan_chunk[1] as f64)
-                        + (fine_chan_chunk[2] as f64)
-                        + (fine_chan_chunk[3] as f64)
-                        + (fine_chan_chunk[4] as f64)
-                        + (fine_chan_chunk[5] as f64)
-                        + (fine_chan_chunk[6] as f64)
-                        + (fine_chan_chunk[7] as f64);
-                    float_count += 8;
+                    for &float_val in fine_chan_chunk {
+                        let abs_val = if absolute { float_val.abs() } else { float_val };
+                        if vis_radix > 0 {
+                            let radix_val = radix(
+                                abs_val as u64,
+                                vis_radix,
+                            );
+                            write!(&mut dump_file, ",{}", radix_val)?;
+                        } else {
+                            write!(&mut dump_file, ",{}", abs_val)?;
+                        }
+                        println!("{:08}", abs_val);
+                        sum += float_val as f64;
+                        float_count += 1;
+                    }
+                    writeln!(&mut dump_file)?;
                 }
             }
         }

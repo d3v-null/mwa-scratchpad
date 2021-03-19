@@ -22,9 +22,10 @@ fn main() -> Result<(), Error> {
             metafits,
             files,
             dump_filename,
+            vis_radix,
+            absolute
         }) => {
-            dump_all_data::dump_all_data(&metafits, &files, &dump_filename)?;
-
+            dump_all_data::dump_all_data(&metafits, &files, &dump_filename, vis_radix, absolute)?;
             Ok(())
         }
     }

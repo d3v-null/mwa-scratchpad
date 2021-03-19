@@ -5,7 +5,7 @@ use mwalib::{
     coarse_channel::CoarseChannel,
     metafits_context::MetafitsContext,
     // conversion::LegacyConversionBaseline,
-    correlator_context::CorrelatorVersion,
+    metafits_context::CorrelatorVersion,
     // gpubox_files::GPUBoxBatch,
     // rfinput::RFInput,
     timestep::TimeStep,
@@ -118,7 +118,7 @@ pub struct MWALibContextDef {
 // }
 
 mod correlator_version_shim {
-    use mwalib::correlator_context::CorrelatorVersion;
+    use mwalib::metafits_context::CorrelatorVersion;
     use serde::Serializer;
 
     pub fn to_serializable(v: &CorrelatorVersion) -> &str {
